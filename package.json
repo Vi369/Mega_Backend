@@ -5,7 +5,7 @@
   "description": "a backend mega project that contains lots of features.",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
   "keywords": [
     "javascript",
@@ -16,5 +16,10 @@
   "devDependencies": {
     "nodemon": "^3.0.2",
     "prettier": "^3.1.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3"
   }
 }
