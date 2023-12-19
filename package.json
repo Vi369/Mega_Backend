@@ -1,15 +1,20 @@
 {
   "name": "mega-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "a backend mega project that contains lots of features.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
+
   },
   "keywords": [
     "javascript",
     "backend"
   ],
   "author": "Vikas singh varma",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
 }
