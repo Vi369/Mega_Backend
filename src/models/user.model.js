@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import { Jwt } from "jsonwebtoken";
+import JWT from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
@@ -50,6 +50,52 @@ const userSchema = new Schema(
     }, {timestamps: true}
 )
 
+userSchema.pre("save", async function (next){
+    /*kaise check kare password ko to isModified() available hota hai for check
+    string me hi dena padta hai syntax hai **/
+    if(!this.isModified("password")) return next() 
+    this.password = bcrypt.hash(this.password, 10)
+    next()
+})
+
+// check password is correct or not 
+// mongoose provide add methods also 
+
+userSchema.methods.isPasswordCorrect = async function(password){
+   return await bcrypt.compare(password, this.password)
+}
+
+// access token
+userSchema.methods.generateAccessToken = function (){
+    return JWT.sign(
+        {
+            _id: this.id,
+            email: this.email,
+            username: this.email,
+            fullName: this.fullName
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        // expiry ke liye object lagta hai 
+        {
+            expiresIn:  process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
+}
+
+//Refresh token
+
+userSchema.methods.generateRefreshToken = function (){
+    return JWT.sign(
+        {
+            _id: this.id,
+        },
+        process.env.REFRESH_TOKEN_ACCESS,
+        // expiry ke liye object lagta hai 
+        {
+            expiresIn:  process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
 
 
 export const User = mongoose.model("User", userSchema)
