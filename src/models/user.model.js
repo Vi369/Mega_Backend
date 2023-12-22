@@ -50,6 +50,8 @@ const userSchema = new Schema(
     }, {timestamps: true}
 )
 
+// TODO: improve code with try catch after complete the project i will come here
+
 userSchema.pre("save", async function (next){
     /*kaise check kare password ko to isModified() available hota hai for check
     string me hi dena padta hai syntax hai **/
