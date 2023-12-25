@@ -1,5 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import ApiError from '../utils/ApiError.js'
+import {ApiError} from '../utils/ApiError.js'
 import {User} from '../models/user.model.js'
 import {uploadOnCloudinaary} from '../utils/services/cloudinary.service.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -15,7 +15,7 @@ const registerUser = asyncHandler(async(req, res)=>{
     // retrun response,
 
     const {fullName, email, password,username} = req.body 
-    console.log(fullName);
+    // console.log("request body data part: ",req.body);
 
     // validation check field empty 
     
@@ -29,7 +29,7 @@ const registerUser = asyncHandler(async(req, res)=>{
     // checking user already exists 
 
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{username},{email}]
     })
     if(existedUser){
@@ -53,19 +53,27 @@ const registerUser = asyncHandler(async(req, res)=>{
 
     **/
 
-    
+    //TODO: password validation check 
 
-    
-     const avatarLocalFile = req.files?.avatar[0]?.path; // we receive proper path jo multer ne upload kiya hai wo hame mil jayega
+    //  const avatarLocalFile = req.files?.avatar[0]?.path;
 
-//TODO: console.log(req.files)
+    //improved code
+    let avatarLocalFile; // we receive proper path jo multer ne upload kiya hai wo hame mil jayega
+    if(req.files && Array.isArray(req.files.avatar) && req.files.avatar[0]){
+        avatarLocalFile = req.files.avatar[0].path;
+    }else{
+        // if avatat file not receive
+        throw new ApiError(400, "Avatar file is required");
+    }
 
-     const coverImageLocalFile = req.files?.coverImage[0]?.path; 
+    //    console.log("req files data: ",req.files)
 
-  // avatat file cheacking its hai ki nahi  
-if(!avatarLocalFile){
-    throw new ApiError(400, "Avatar file is required");
-}
+    //  const coverImageLocalFile = req.files?.coverImage[0]?.path; 
+
+    let coverImageLocalFile;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalFile = req.files.coverImage[0].path;
+    }
 
 //upload in cloudinary
 const avatar = await uploadOnCloudinaary(avatarLocalFile);
