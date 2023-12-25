@@ -73,7 +73,7 @@ userSchema.methods.isPasswordCorrect = async function(password){
    return await bcrypt.compare(password, this.password)
 }
 
-// access token
+// access token generate function
 userSchema.methods.generateAccessToken = function (){
     return JWT.sign(
         {
@@ -90,7 +90,7 @@ userSchema.methods.generateAccessToken = function (){
     )
 }
 
-//Refresh token
+//Refresh token generate function
 
 userSchema.methods.generateRefreshToken = function (){
     return JWT.sign(

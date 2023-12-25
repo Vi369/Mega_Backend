@@ -3,6 +3,28 @@ import {ApiError} from '../utils/ApiError.js'
 import {User} from '../models/user.model.js'
 import {uploadOnCloudinaary} from '../utils/services/cloudinary.service.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
+
+// access and refresh token genrate function
+const generateAccessAndRefreshTokens =  async (userId)=>{
+    try {
+        const user = await User.findById(userId);
+        const accessToken =  user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+
+        // Assigning the refresh token to the user instance
+        user.refreshToken = refreshToken;
+
+        // Saving the user instance
+        await user.save({validateBeforeSave: fasle})
+
+        return {accessToken, refreshToken}
+
+    } catch (error) {
+        throw new ApiError(500, " something went wrong while generating access and refresh token")
+    }
+}
+
+//register user 
 const registerUser = asyncHandler(async(req, res)=>{
     // get user details from frontend
     // validation empty check
@@ -111,5 +133,49 @@ return res.status(201).json(
 
 }) 
 
+// login user 
 
-export {registerUser }
+const loginUser = asyncHandler( async(req,res)=>{
+     /** **********Stpes**********
+      * req body data structure 
+      * get data any one username or email
+      * find the user and check user exists or not 
+      * check the password if password not correct then send password not correct
+      * access and refresh token generate  
+      * send cookie
+      * send responce successfull login
+      */
+
+     const {email , username, password} = req.body;
+
+     if(!(username || email)){
+        throw new ApiError(400, "username or email is required");
+     }
+
+     // find the user 
+    const user = await User.findOne({
+        $or: [{username},{email}] // in array we pass the object
+    })
+
+    //check the user exists or not 
+    if(!user){
+        throw new ApiError(404, "User does not exist")
+    }
+
+    //check the password
+    const isPasswordValid = await user.isPasswordCorrect(password)
+    if(!isPasswordValid){
+        throw new ApiError(401, "Password is not correct");
+    }
+
+    // generating access and refresh token 
+    const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+    //send in cookie
+
+})
+
+
+export {
+        registerUser,
+        loginUser
+     }
