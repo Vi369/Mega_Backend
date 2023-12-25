@@ -56,8 +56,14 @@ userSchema.pre("save", async function (next){
     /*kaise check kare password ko to isModified() available hota hai for check
     string me hi dena padta hai syntax hai **/
     if(!this.isModified("password")) return next() 
-    this.password = bcrypt.hash(this.password, 10)
-    next()
+    try {
+        this.password = await bcrypt.hash(this.password, 10)
+        next()
+    } catch (error) {
+        console.log(error.message);
+        next (error); // 
+    }
+    
 })
 
 // check password is correct or not 
