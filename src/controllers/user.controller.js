@@ -134,7 +134,6 @@ return res.status(201).json(
 }) 
 
 // login user 
-
 const loginUser = asyncHandler( async(req,res)=>{
      /** **********Stpes**********
       * req body data structure 
@@ -170,6 +169,7 @@ const loginUser = asyncHandler( async(req,res)=>{
 
     // generating access and refresh token 
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
     //send in cookie
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
@@ -192,15 +192,48 @@ const loginUser = asyncHandler( async(req,res)=>{
             "User logged in successfully!!"
         )
     )
+   
 })
 
 
 // logout user 
 const logoutUser = asyncHandler( async(req, res)=>{
+/**  steps how to logout user
+ * clear cookies so first i need user id access here 
+ * creating and use middlewares to get access 
+ */
+
+    await User.findByIdAndUpdate(req.user._id,
+        {
+            $set: { refreshToken:undefined }
+        },
+        {
+            new: true
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", accessToken,options)
+    .clearCookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {}, //data we send empty bez we dont need
+            "User logout in successfully!!"
+        )
+    )
+
 
 })
 
 export {
         registerUser,
-        loginUser
+        loginUser,
+        logoutUser,
      }
