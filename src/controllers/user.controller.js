@@ -4,6 +4,7 @@ import {User} from '../models/user.model.js'
 import {uploadOnCloudinaary} from '../utils/services/cloudinary.service.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
 import JWT from "jsonwebtoken";
+import mongoose from "mongoose";
 
 // access and refresh token genrate function
 const generateAccessAndRefreshTokens =  async (userId)=>{
@@ -425,7 +426,6 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
 })
 
 // get user Channel  profile function
-
 const getUserChannelProfile = asyncHandler( async(req, res)=>{
     //getting data from url 
     const {username} = req.params
@@ -510,6 +510,70 @@ const getUserChannelProfile = asyncHandler( async(req, res)=>{
     // TODO: console channel value 
 })
 
+// get watch history func
+const getWatchHistory = asyncHandler(async(req,res)=>{
+   const user =  await User.aggregate([
+        //stage 1  matching id feild to object id of current user
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id) 
+                // bez mongodb id a proper way like 'ObjectId('string')' but in aggregate function all code gose as a some so mongoose can't convert this so we convert like this kiuki hame req.user._id se string value recive hoti hai jo ki kafi nahi hai match karne ke liye  
+            }
+        },
+        //stage 2 lookup from videos database to get all videos id in my users local feild
+        {
+           $lookup:{
+            from: "videos",
+            localField: "watchHistory",
+            foreignField: "_id",
+            as: "watchHistory",
+            pipeline: [ // adding another pipeline (nasted lookup)
+                //stage 1 lookup from users
+                {
+                    $lookup:{
+                        from: "users",
+                        localField: "videoOwner",
+                        foreignField: "_id",
+                        as: "videoOwner",
+                        pipeline:[ // this nested pipeline add the value that i need in videoOwner feild 
+                            //TODO: AGAR BAHAR PIPELINE KARKE DEKHNA HAI 
+                            // stage 1 dont need all vlaue want only specific value
+                            {
+                                $project: {
+                                    fullName: 1,
+                                    avatar: 1,
+                                    username: 1
+                                }
+                            }
+                        ]
+                    }
+                },
+                // stage 2 get data in object format
+                {
+                    $addFields: {
+                        // i want overwrite the existing value thats why same name 
+                        videoOwner:{
+                            $arrayElemAt: ["$videoOwner", 0]
+                        }
+                    }
+                }
+                
+               
+            ]
+           }
+        },
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            " fetched watchHistory videos successfully !!"
+        )
+    )
+})
 
 export {
     registerUser,
@@ -521,5 +585,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory,
 }
