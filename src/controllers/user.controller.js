@@ -5,6 +5,7 @@ import {uploadOnCloudinaary} from '../utils/services/cloudinary.service.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
 import JWT from "jsonwebtoken";
 import mongoose from "mongoose";
+import fs from 'fs'
 
 // access and refresh token genrate function
 const generateAccessAndRefreshTokens =  async (userId)=>{
@@ -364,6 +365,10 @@ const updateUserAvatar = asyncHandler(async(req, res)=>{
     //upload in cloudinary and get a url file so
     const avatar = await uploadOnCloudinaary(avatarLocalPath);
 
+    // remove from local file
+    fs.unlinkSync(avatarLocalPath)
+    
+
     // check avatar
     if(!avatar.url){
         throw new ApiError(400, "Error while uploading on avatar file in cloudinary")
@@ -399,6 +404,9 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
 
     //upload in cloudinary and get a url file so
     const coverImage = await uploadOnCloudinaary(coverImageLocalPath);
+
+    //remove form local path
+    fs.unlinkSync(coverImageLocalPath)
 
     // check coverImage
     if(!coverImage.url){
