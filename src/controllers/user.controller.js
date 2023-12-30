@@ -424,7 +424,91 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
     )
 })
 
+// get user Channel  profile function
 
+const getUserChannelProfile = asyncHandler( async(req, res)=>{
+    //getting data from url 
+    const {username} = req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400, "Username is missing")
+    }
+    
+    const channel =  await User.aggregate([
+        // match the value 
+        // pipeline stage 1
+        {
+            $match:{
+                username: username?.toLowerCase()
+            }
+        },
+        // stage 2 lookup all the sabscribers value
+        {
+            $lookup:{
+                from:"subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        // stage 3 loolup all the subscribe to value that user subscribed 
+        {
+            $lookup:{
+                from:"subscriptions", // because its store in database lowercase and purals form
+                 localField: "_id",
+                 foreignField: "subscriber",
+                 as: "subscribedTo"
+            }
+        },
+        // stage 4 addfeilds and count value
+        {
+            $addFields:{
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelSubscribedToCount: {
+                    $size: "$subscribedTo"
+                }, 
+                //check user subscribed or not 
+                isSubscriber: {
+                    $cond: {
+                        if:{$in: [req.user?._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        // stage 5 i want only selected value
+        {
+            $project:{
+                subscribersCount: 1,
+                channelSubscribedToCount: 1,
+                username: 1,
+                email: 1,
+                fullName: 1,
+                avatar: 1,
+                coverImage: 1,
+                createdAt: 1
+            }
+        }
+    ])
+
+    if(!channel?.length){
+        throw new ApiError(404, "User channel does not exists")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200, 
+            channel[0],
+            "Channel fetched successfully!!"
+        )
+    )
+
+    // TODO: console channel value 
+})
 
 
 export {
@@ -436,5 +520,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
