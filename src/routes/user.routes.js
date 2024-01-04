@@ -13,6 +13,7 @@ import {
     getWatchHistory} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import {loginValidator, registerValidator} from '../middlewares/UserDetailsValidator.middleware.js'
 const router = Router()
 
 router.route('/register').post(
@@ -26,10 +27,11 @@ router.route('/register').post(
             maxCount: 1
         }
     ]),
+    registerValidator,
     registerUser
 )
 
-router.route('/login').post(loginUser)
+router.route('/login').post(loginValidator,loginUser)
 
 //secure route
 router.route('/logout').post(verifyJWT, logoutUser)
