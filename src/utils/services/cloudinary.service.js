@@ -1,9 +1,7 @@
-import {v2 as cloudinary} from 'cloudinary'
+import {v2 as cloudinary } from 'cloudinary'
 import fs from 'fs'
 
-
-
-          
+// config
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
   api_key: process.env.CLOUDINARY_API_KEY, 
@@ -12,36 +10,22 @@ cloudinary.config({
 
 
 const uploadOnCloudinaary = async (localFilePath)=>{
+    console.log(localFilePath)
     try {
         if(!localFilePath) return null
-        //TODO: return "Cloud not find a path" ;
         // upload the file on cloudinary
         const responce = await cloudinary.uploader.upload(localFilePath,{
             resource_type: "auto" 
-        })
-        // file has been uploaded successfully 
-        // console.log("all responce data: ",responce)
+        });
         fs.unlinkSync(localFilePath)
         return responce 
 
-        //TODO: console responce to see what we get it and also read the cloudinary docs
     } catch (error) {
         fs.unlinkSync(localFilePath);
         // remove the local saved tempory file as the upload operation got failed
         return null 
-
-         //TODO: return "Cloud not find a path" ;
     }
 }
 
 
 export { uploadOnCloudinaary }
-
-
-
-// TODO: remove all this after reading codes one more time 
-
-// sample code we got in website 
-// cloudinary.v2.uploader.upload("https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",
-//   { public_id: "olympic_flag" }, 
-//   function(error, result) {console.log(result); });

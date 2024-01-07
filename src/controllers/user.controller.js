@@ -116,10 +116,6 @@ const loginUser = asyncHandler( async(req,res)=>{
 
 // logout user 
 const logoutUser = asyncHandler( async(req, res)=>{
-/**  steps how to logout user
- * clear cookies so first i need user id access here 
- * creating and use middlewares to get access 
- */
 
     await User.findByIdAndUpdate(req.user._id,
         {
@@ -207,6 +203,7 @@ const refreshAccessToken = asyncHandler( async(req,res)=>{
 
 //change password function
 const changeCurrentPassword = asyncHandler( async(req, res)=>{
+    console.log(req.body)
     const {oldPassword, newPassword} = req.body;
 
     const user = await User.findById(req.user?._id);
@@ -271,8 +268,8 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
 
 // update user avatar 
 const updateUserAvatar = asyncHandler(async(req, res)=>{
-    const {avatarLocalPath}= req.file?.path;
-    
+    const avatarLocalPath = req.file?.path
+
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file missing")
     }
@@ -280,8 +277,9 @@ const updateUserAvatar = asyncHandler(async(req, res)=>{
     //upload in cloudinary and get a url file so
     const avatar = await uploadOnCloudinaary(avatarLocalPath);
 
+    console.log(avatar);
     // remove from local file
-    fs.unlinkSync(avatarLocalPath)
+    // fs.unlinkSync(avatarLocalPath)
     
 
     // check avatar
