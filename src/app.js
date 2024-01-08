@@ -17,35 +17,35 @@ app.use(cookieParser()) // cookie ralated data handled and work that receive in 
 
 // import userRoutes
 import userRouter from './routes/user.routes.js'
-// import healthcheckRoutes
-import healthcheckRouter from './routes/healthcheck.routes.js'
-//import tweetRouter
-import tweetRouter from './routes/tweet.routes.js'
-// import subscriptionRoutes
-import subscriptionRouter from './routes/subscription.routes.js'
-// import videoRoutes
-import videoRouter from './routes/video.routes.js'
-// import commentRoutes
-import commentRouter from './routes/comment.routes.js'
-// import likeRoutes
-import likeRouter from './routes/like.routes.js'
-// import playlistRoutes
-import playlistRouter from './routes/playlist.routes.js'
-// import dashboadRoutes
-import dashboardRouter from './routes/dashboard.routes.js'
+// // import healthcheckRoutes
+// import healthcheckRouter from './routes/healthcheck.routes.js'
+// //import tweetRouter
+// import tweetRouter from './routes/tweet.routes.js'
+// // import subscriptionRoutes
+// import subscriptionRouter from './routes/subscription.routes.js'
+// // import videoRoutes
+// import videoRouter from './routes/video.routes.js'
+// // import commentRoutes
+// import commentRouter from './routes/comment.routes.js'
+// // import likeRoutes
+// import likeRouter from './routes/like.routes.js'
+// // import playlistRoutes
+// import playlistRouter from './routes/playlist.routes.js'
+// // import dashboadRoutes
+// import dashboardRouter from './routes/dashboard.routes.js'
 
 
 
 // routes Declaration 
 app.use('/api/v1/users', userRouter)
-app.use('/api/v1/healthcheck', healthcheckRouter)
-app.use('/api/v1/tweets', tweetRouter)
-app.use('/api/v1/subscriptionRouter', subscriptionRouter)
-app.use('/api/v1/videos', videoRouter)
-app.use('/api/v1/comments', commentRouter)
-app.use('/api/v1/likes', likeRouter)
-app.use('/api/v1/playlist', playlistRouter)
-app.use('/api/v1/dashboard', dashboardRouter)
+// app.use('/api/v1/healthcheck', healthcheckRouter)
+// app.use('/api/v1/tweets', tweetRouter)
+// app.use('/api/v1/subscriptionRouter', subscriptionRouter)
+// app.use('/api/v1/videos', videoRouter)
+// app.use('/api/v1/comments', commentRouter)
+// app.use('/api/v1/likes', likeRouter)
+// app.use('/api/v1/playlist', playlistRouter)
+// app.use('/api/v1/dashboard', dashboardRouter)
 
 
 
