@@ -10,11 +10,11 @@ cloudinary.config({
 
 
 const uploadOnCloudinaary = async (localFilePath)=>{
-    console.log(localFilePath)
     try {
         if(!localFilePath) return null
         // upload the file on cloudinary
         const responce = await cloudinary.uploader.upload(localFilePath,{
+            folder: "Vtube",
             resource_type: "auto" 
         });
         fs.unlinkSync(localFilePath)
@@ -27,5 +27,19 @@ const uploadOnCloudinaary = async (localFilePath)=>{
     }
 }
 
+const deleteOnCloudinary = async(public_id, resource_type)=>{
+    if(!public_id) return null
+    try {
+        return await cloudinary.uploader.destroy(public_id, {
+            resource_type,
+        })
+    } catch (error) {
+        console.log(error)
+        return null
+    }
+}
 
-export { uploadOnCloudinaary }
+
+export {
+     uploadOnCloudinaary,
+     deleteOnCloudinary }

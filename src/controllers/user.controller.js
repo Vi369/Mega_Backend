@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from '../utils/ApiError.js'
 import {User} from '../models/user.model.js'
-import {uploadOnCloudinaary} from '../utils/services/cloudinary.service.js'
+import {uploadOnCloudinaary, deleteOnCloudinary} from '../utils/services/cloudinary.service.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
 import JWT from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -59,8 +59,8 @@ const registerUser = asyncHandler(async(req, res)=>{
     // store in database 
     const user = await User.create({
         fullName,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        avatar: {public_id:avatar?.public_id, url: avatar?.url}, 
+        coverImage: {public_id: coverImage?.public_id, url: coverImage?.url},
         email,
         password,
         username: username.toLowerCase()
@@ -274,28 +274,27 @@ const updateUserAvatar = asyncHandler(async(req, res)=>{
         throw new ApiError(400, "Avatar file missing")
     }
 
+    // delete privious avatar file on cloudinary
+    const user = await User.findById(req.user?._id).select("-password -refreshToken")
+
+    const previousAvatar = user.avatar
+
+    if (previousAvatar.public_id) {
+        await deleteOnCloudinary(previousAvatar.public_id);
+    }
+    
     //upload in cloudinary and get a url file so
     const avatar = await uploadOnCloudinaary(avatarLocalPath);
-
-    console.log(avatar);
-    // remove from local file
-    // fs.unlinkSync(avatarLocalPath)
-    
 
     // check avatar
     if(!avatar.url){
         throw new ApiError(400, "Error while uploading on avatar file in cloudinary")
     }
 
-    
-   const user = await User.findByIdAndUpdate(req.user?._id,
-        {
-            $set: {
-                avatar: avatar.url
-            }
-        },
-        {new: true})
-    
+    // stote in database 
+    user.avatar = { key: avatar?.public_id, url: avatar?.url };
+    await user.save({ validateBeforeSave: false });
+      
     return res
     .status(200)
     .json(
@@ -309,31 +308,29 @@ const updateUserAvatar = asyncHandler(async(req, res)=>{
 
 // update coverImage file
 const updateUserCoverImage = asyncHandler(async(req, res)=>{
-    const {coverImageLocalPath}= req.file?.path;
+    const coverImageLocalPath = req.file?.path;
     
     if(!coverImageLocalPath){
         throw new ApiError(400, "coverImage file missing")
     }
+// delete privious coverImage file on cloudinary
+    const user = await User.findById(req.user?._id)
+        .select("-password -refreshToken");
+
+    const previousCoverImage = user.coverImage;
+        if (previousCoverImage.public_id) {
+            await deleteOnCloudinary(previousCoverImage.public_id);
+    }  
 
     //upload in cloudinary and get a url file so
     const coverImage = await uploadOnCloudinaary(coverImageLocalPath);
 
-    //remove form local path
-    fs.unlinkSync(coverImageLocalPath)
 
     // check coverImage
     if(!coverImage.url){
         throw new ApiError(400, "Error while uploading on coverImage file in cloudinary")
     }
 
-    
-   const user = await User.findByIdAndUpdate(req.user?._id,
-        {
-            $set: {
-                coverImage: coverImage.url
-            }
-        },
-        {new: true})
     
     return res
     .status(200)
