@@ -1,4 +1,4 @@
-import mongoose, {isValidObjectId} from "mongoose";
+import mongoose, { isValidObjectId} from "mongoose";
 import { Tweet } from "../models/tweet.model.js";
 import { User } from "../models/user.model.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
@@ -107,10 +107,42 @@ const deleteTweet = asyncHandler(async (req, res) => {
         new ApiResponse(200, deleteTweet, "tweet deleted successfully!!"))
 })
 
+// get all tweets
+const getUserTweets = asyncHandler(async (req, res) => {
+    const {userId} = req.params
+
+    if(!isValidObjectId(userId)){
+        throw new ApiError(400, "This user id is not valid")
+    }
+
+   // find user in database 
+    const user = await User.findById(userId)
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // match and find all tweets
+    const tweets = await Tweet.aggregate([
+        {
+            $match:{
+                owner: user._id,
+            }
+            
+        }
+    ]);
+
+    if(!tweets){
+        throw new ApiError(500, "something went wrong while fetching tweets")
+    
+    }
+    // return responce
+     return res.status(201).json(
+        new ApiResponse(200, deleteTweet, "tweets fetched  successfully!!"))
+})
 
 export {
     createTweet,
     updateTweet,
     deleteTweet,
-
+    getUserTweets,
 }
