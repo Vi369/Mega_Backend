@@ -5,7 +5,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js"
 
-//create tweet
+// create tweet
 const createTweet = asyncHandler( async(req, res)=>{
     const {content} = req.body;
 
@@ -76,7 +76,41 @@ const updateTweet = asyncHandler(async (req, res) => {
     new ApiResponse(200, updateTweet, "tweet updated successfully!!"))
 })
 
+// delete tweet
+const deleteTweet = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+
+    if(!isValidObjectId(tweetId)){
+        throw new ApiError(400, "This tweet id is not valid")
+    }
+
+    const tweet = await Tweet.findById(tweetId)
+    
+    if (!tweet) {
+        throw new ApiError(404, "no tweet found!");
+    }
+
+    if (tweet.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to delete this tweet!");
+    }
+
+    const deleteTweet = await Tweet.deleteOne(req.user._id)
+
+    console.log("delete successfully", deleteTweet)
+
+    if(!deleteTweet){
+        throw new ApiError(500, "something went wrong while deleting tweet")
+       }
+    
+       // return responce
+       return res.status(201).json(
+        new ApiResponse(200, deleteTweet, "tweet deleted successfully!!"))
+})
+
+
 export {
     createTweet,
-    updateTweet
+    updateTweet,
+    deleteTweet,
+
 }
