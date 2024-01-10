@@ -6,12 +6,14 @@ const commentSchema = new Schema({
         type: String,
         required: true
     },
-    video:[
-        {
+    video:{
             type: Schema.Types.ObjectId,
             ref: "Video"
-        }
-    ],
+        },
+    tweet:{
+            type: Schema.Types.ObjectId,
+            ref: "Tweet"
+    },
     owner:{
         type: Schema.Types.ObjectId,
         ref: "User"
