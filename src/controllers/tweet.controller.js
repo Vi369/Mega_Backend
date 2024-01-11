@@ -96,7 +96,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
     const deleteTweet = await Tweet.deleteOne(req.user._id)
 
-    console.log("delete successfully", deleteTweet)
+    // console.log("delete successfully", deleteTweet)
 
     if(!deleteTweet){
         throw new ApiError(500, "something went wrong while deleting tweet")
