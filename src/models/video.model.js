@@ -4,12 +4,20 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 const videoSchema = new mongoose.Schema(
     {
         videoFile: {
-            type: String, // cloudinary url
-            required: [true, 'A video file is required']
+            public_id:{
+                type: String
+            },
+            url:{
+                type: String
+            }
         },
         thumbnail:{
-            type: String, // cloudinary url
-            // required: [true]
+            public_id:{
+                type: String
+            },
+            Url:{
+                type: String
+            }
         },
         title: {
             type: String,

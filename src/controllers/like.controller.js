@@ -120,11 +120,55 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    // match and find all the video that user like
-    const likedVideos = await Like.aggregate([
-       
-        
+    // get all liked videos
+    const like = await Like.aggregate([
+        {
+            $match:{
+                likedBy: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup:{
+                from: "videos",
+                localField: "video",
+                foreignField: "_id",
+                as: "likedVideos",
+                pipeline:{
+                    $lookup:{
+                        from: "users",
+                        localField: "videoOwner",
+                        foreignField:"_id",
+                        as:"userLikedVideos",
+                        pipeline:[
+                            {
+                                $project: {
+                                    fullName: 1,
+                                    avatar: 1,
+                                    username: 1
+                                }
+                            }
+                        ]
+                    },
+                    $addFields:{
+                        likedVideos: {
+                            $arrayElemAt: ["$userLikedVideos", 0]
+                        }
+                    }
+                }
+            }
+        }
     ])
+
+    //return responce 
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            like[0]?.likedVideos || {},
+            " fetched Liked videos successfully !!"
+        )
+    )
 })
 
 export {
