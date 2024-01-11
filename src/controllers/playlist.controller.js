@@ -101,7 +101,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
 
 // get user playlists
 const getUserPlaylists = asyncHandler(async (req, res) => {
-    const {userId} = req.params
+    const { userId } = req.params
     if(!isValidObjectId(userId)){
         throw new ApiError(400, "This user id is not valid")
     }
@@ -112,7 +112,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    // match and find all tweets
+    // match and find all playlist
     const playlists = await Playlist.aggregate([
         {
             $match:{
@@ -131,9 +131,38 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         new ApiResponse(200, playlists, "playlists fetched  successfully!!"))
 })
 
+// get playlist by id 
 const getPlaylistById = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params
-    //TODO: get playlist by id
+    const { playlistId } = req.params
+    
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "This playlist id is not valid")
+    }
+
+    // find user in database 
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "playlist not found");
+    }
+
+     // match and find 
+     const getPlaylist = await Playlist.aggregate([
+        {
+            $match:{
+                _id: playlistId
+            }
+            
+        }
+    ]);
+
+    if(!getPlaylist){
+        throw new ApiError(500, "something went wrong while fetching playlist")
+    }
+
+     // return responce
+     return res.status(201).json(
+        new ApiResponse(200, getPlaylist, "playlist fetched  successfully!!"))
 })
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
