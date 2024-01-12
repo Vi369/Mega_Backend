@@ -30,77 +30,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
     );
 })
 
-// delete playlist
-const deletePlaylist = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params
-
-    if(!isValidObjectId(playlistId)){
-        throw new ApiError(400, "This playlist id is not valid")
-    }
-
-    const playlist = await Playlist.findById(playlistId)
-
-    if (!playlist) {
-        throw new ApiError(404, "no playlist found!");
-    }
-
-    if (playlist.owner.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You don't have permission to delete this playlist!");
-    }
-
-    const deletePlaylist = await Playlist.deleteOne(req.user._id)
-
-    if(!deletePlaylist){
-        throw new ApiError(500, "something went wrong while deleting playlist")
-    }
-
-    // return responce
-    return res.status(201).json(
-        new ApiResponse(200, deletePlaylist, "playlist deleted successfully!!"))
-})
-
-// update playlist
-const updatePlaylist = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params
-    const {NewName, NewDescription} = req.body
-    
-    if(!isValidObjectId(playlistId)){
-        throw new ApiError(400, "This playlist id is not valid")
-    }
-    // if any one is provided
-    if ((!NewName || NewName?.trim() === "") && (!NewDescription || NewDescription?.trim() === "")) {
-        throw new ApiError(400, "Either name or description is required");
-    } else {
-        const playlist = await Playlist.findById(tweetId)
-
-        if (playlist.owner.toString() !== req.user._id.toString()) {
-            throw new ApiError(403, "You don't have permission to update this playlist!");
-        }
-
-        const updatePlaylist = await Playlist.findByIdAndUpdate(
-            playlistId,
-            {
-                $set:{
-                    name: NewName,
-                    description: NewDescription
-                }
-            },
-            {
-                new: true
-            }
-        )
-
-        if(!updatePlaylist){
-            throw new ApiError(500, "something went wrong while updating playlist!!")
-        }
-
-        // return responce
-        return res.status(201).json(
-        new ApiResponse(200, updatePlaylist, "playlist updated successfully!!"))
-    }
-})
-
-// get user playlists
+// get user playlists by userId
 const getUserPlaylists = asyncHandler(async (req, res) => {
     const { userId } = req.params
     if(!isValidObjectId(userId)){
@@ -114,7 +44,28 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     }
 
     // match and find all playlist
-    const playlists = ;
+    const playlists = await Playlist.aggregate([
+        {
+            $match:{
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup:{
+                from: "videos",
+                localField: "video",
+                foreignField: "_id",
+                as: "videos", 
+            }
+        },
+        {
+            $addFields:{
+                playlist:{
+                    $first: "$videos"
+                }
+            }
+        }
+    ])
 
     if(!playlists){
         throw new ApiError(500, "something went wrong while fetching playlists")
@@ -141,7 +92,54 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     }
 
      // match and find 
-     const getPlaylist = ;
+     const getPlaylist = Playlist.aggregate([
+        {
+            $match: new mongoose.Types.ObjectId(playlistId)
+        },
+        {
+            $lookup:{
+                from: "videos",
+                localField: "video",
+                foreignField: "_id",
+                as: "videos",
+                pipeline:[
+                    {
+                        $project:{
+                            title: 1,
+                            description: 1,
+                            thumbnail: 1,
+                            duration: 1,
+                        }
+                    },
+                    {
+                        $addFields: {
+                            videoDetails:{
+                                $arrayElemAt: ["$videos", 0]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup:{
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "playlistOwner",
+                pipeline:[
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        }
+        
+     ])
 
     if(!getPlaylist){
         throw new ApiError(500, "something went wrong while fetching playlist")
@@ -151,6 +149,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
      return res.status(201).json(
         new ApiResponse(200, getPlaylist, "playlist fetched  successfully!!"))
 })
+
 
 // add video to playlist
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
@@ -261,6 +260,78 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(200, addedToPlaylist, "removed video in playlist successfully!!"))
 })
+
+// delete playlist
+const deletePlaylist = asyncHandler(async (req, res) => {
+    const {playlistId} = req.params
+
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "This playlist id is not valid")
+    }
+
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "no playlist found!");
+    }
+
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to delete this playlist!");
+    }
+
+    const deletePlaylist = await Playlist.deleteOne(req.user._id)
+
+    if(!deletePlaylist){
+        throw new ApiError(500, "something went wrong while deleting playlist")
+    }
+
+    // return responce
+    return res.status(201).json(
+        new ApiResponse(200, deletePlaylist, "playlist deleted successfully!!"))
+})
+
+// update playlist
+const updatePlaylist = asyncHandler(async (req, res) => {
+    const {playlistId} = req.params
+    const {NewName, NewDescription} = req.body
+    
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "This playlist id is not valid")
+    }
+    // if any one is provided
+    if ((!NewName || NewName?.trim() === "") && (!NewDescription || NewDescription?.trim() === "")) {
+        throw new ApiError(400, "Either name or description is required");
+    } else {
+        const playlist = await Playlist.findById(tweetId)
+
+        if (playlist.owner.toString() !== req.user._id.toString()) {
+            throw new ApiError(403, "You don't have permission to update this playlist!");
+        }
+
+        const updatePlaylist = await Playlist.findByIdAndUpdate(
+            playlistId,
+            {
+                $set:{
+                    name: NewName,
+                    description: NewDescription
+                }
+            },
+            {
+                new: true
+            }
+        )
+
+        if(!updatePlaylist){
+            throw new ApiError(500, "something went wrong while updating playlist!!")
+        }
+
+        // return responce
+        return res.status(201).json(
+        new ApiResponse(200, updatePlaylist, "playlist updated successfully!!"))
+    }
+})
+
+
 
 
 
