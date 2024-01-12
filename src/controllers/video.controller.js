@@ -3,6 +3,7 @@ import { deleteOnCloudinary, uploadOnCloudinaary } from "../utils/services/cloud
 import { Video } from "../models/video.model.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 // publish video
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -145,7 +146,49 @@ const getAllVideos = asyncHandler(async (req, res) => {
 // delete video
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "This video id is not valid")
+    } 
+
+    // find video in db
+    const video = await Video.findById(
+        {
+            _id: videoId
+        }
+    )
+
+    if(!video){
+        throw new ApiError(404, "video not found")
+    }
+    
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to delete this video!");
+    }
+
+    // delete video and thumbnail in cloudinary
+    if(video.videoFile){
+        await deleteOnCloudinary(video.videoFile.public_id, "video")
+    }
+
+    if(video.thumbnail){
+        await deleteOnCloudinary(video.thumbnail.public_id)
+    }
+
+    const deleteResponce = await Video.findByIdAndDelete(videoId)
+
+    if(!deleteResponce){
+        throw new ApiError(500, "something went wrong while deleting video !!")
+    }
+
+    // return responce
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            deleteResponce,
+            "video deleted successfully!!"
+        )
+    )
 })
 
 // toggle publish status
