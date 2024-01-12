@@ -4,6 +4,7 @@ import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { User } from "../models/user.model.js"
+import { Video } from "../models/video.model.js"
 // create playlist
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
@@ -113,14 +114,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     }
 
     // match and find all playlist
-    const playlists = await Playlist.aggregate([
-        {
-            $match:{
-                owner: user._id,
-            }
-            
-        }
-    ]);
+    const playlists = ;
 
     if(!playlists){
         throw new ApiError(500, "something went wrong while fetching playlists")
@@ -147,14 +141,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     }
 
      // match and find 
-     const getPlaylist = await Playlist.aggregate([
-        {
-            $match:{
-                _id: playlistId
-            }
-            
-        }
-    ]);
+     const getPlaylist = ;
 
     if(!getPlaylist){
         throw new ApiError(500, "something went wrong while fetching playlist")
@@ -165,14 +152,114 @@ const getPlaylistById = asyncHandler(async (req, res) => {
         new ApiResponse(200, getPlaylist, "playlist fetched  successfully!!"))
 })
 
+// add video to playlist
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
+
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "This playlist id is not valid")
+    }
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "This video id is not valid")
+    }
+// find playlist in db
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "no playlist found!");
+    }
+
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to add video in this playlist!");
+    }
+
+    // find video in db
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "no video found!");
+    }
+
+    // if video already exists in playlist 
+    if(playlist.video.includes(videoId)){
+        throw new ApiError(400, "video already exists in this playlist!!");
+    }
+
+    // push video to playlist
+  const addedToPlaylist =   await Playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $push:{
+                video: videoId
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    if(!addedToPlaylist){
+        throw new ApiError(500, "something went wrong while added video to playlist !!");
+    }
+
+    // return responce
+    return res.status(201).json(
+        new ApiResponse(200, addedToPlaylist, " added video in playlist successfully!!"))
 })
 
+// remove video to playlist
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
-    // TODO: remove video from playlist
+    
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "This playlist id is not valid")
+    }
 
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "This video id is not valid")
+    }
+
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "no playlist found!");
+    }
+
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to remove video in this playlist!");
+    }
+
+    // find video in db
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "no video found!");
+    }
+
+    // if video exists or not in playlist 
+    if(!playlist.video.includes(videoId)){
+        throw new ApiError(400, "video not exists in this playlist!!");
+    }
+
+    // remove video in the playlist 
+    const removeVideoToPlaylist = await playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $pull: videoId
+        },
+        {
+            new: true
+        }
+    )
+
+    if(!removeVideoToPlaylist){
+        throw new ApiError(500, "something went wrong while removed video to playlist !!");
+    }
+
+    // return responce 
+    return res.status(201).json(
+        new ApiResponse(200, addedToPlaylist, "removed video in playlist successfully!!"))
 })
 
 
