@@ -5,6 +5,7 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { Video } from "../models/video.model.js"
 import { Tweet } from "../models/tweet.model.js"
+
 // get video comments
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params
@@ -15,7 +16,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     }
 
     // find video in database 
-    const video = await Video.findById(userId)
+    const video = await Video.findById(videoId)
     if (!video) {
         throw new ApiError(404, "video not found");
     }
@@ -86,6 +87,9 @@ const addCommentToVideo = asyncHandler(async (req, res) => {
     const { comment } = req.body;
     const { videoId } = req.params
 
+    console.log("req body ",req.body)
+    console.log("comment",comment)
+
     if( !comment || comment?.trim()===""){
         throw new ApiError(400, "comment is required")
     }
@@ -94,8 +98,8 @@ const addCommentToVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "This video id is not valid")
     }
     
-    const videoComment = Comment.create({
-        content,
+    const videoComment = await Comment.create({
+        content: comment,
         video: videoId,
         owner: req.user._id
     })
@@ -109,49 +113,21 @@ const addCommentToVideo = asyncHandler(async (req, res) => {
         new ApiResponse(200, videoComment, "video comment created successfully!!")
     );
 })
-// add comment to tweet 
-const addCommentToTweet = asyncHandler(async (req, res) => {
-    const { comment } = req.body;
-    const { tweetId } = req.params
-
-    if( !comment || comment?.trim()===""){
-        throw new ApiError(400, "comment is required")
-    }
-
-    if(!isValidObjectId(tweetId)){
-        throw new ApiError(400, "This tweet id is not valid")
-    }
-
-    const tweetComment = Comment.create({
-        content,
-        tweet: tweetId,
-        owner: req.user._id
-    })
-
-    if(!tweetComment){
-        throw new ApiError(500, "something went wrong while creating tweet comment")
-    }
-
-    // return responce
-        return res.status(201).json(
-        new ApiResponse(200, tweetComment, "Tweet comment created successfully!!")
-    );
-})
 
 // update comment to video
 const updateCommentToVideo = asyncHandler(async (req, res) => {
     const { newContent } = req.body 
-    const { videoId } = req.params
+    const { commentId } = req.params
 
     if(!newContent || newContent?.trim()===""){
         throw new ApiError(400, "content is required")
     }
 
-    if(!isValidObjectId(videoId)){
+    if(!isValidObjectId(commentId)){
         throw new ApiError(400, "This video id is not valid")
     }
 
-    const comment = await Comment.findById(videoId)
+    const comment = await Comment.findById(commentId)
 
     if (!comment) {
         throw new ApiError(404, "comment not found!");
@@ -162,50 +138,7 @@ const updateCommentToVideo = asyncHandler(async (req, res) => {
     }
 
     const updateComment = await Comment.findByIdAndUpdate(
-        videoId,
-        {
-            $set:{
-                content: newContent
-            }
-        },
-        {
-            new: true
-        }
-    )
-
-    if(!updateComment){
-        throw new ApiError(500, "something went wrong while updating comment")
-    }
-
-    // return responce
-   return res.status(201).json(
-    new ApiResponse(200, updateComment, "comment updated successfully!!"))
-})
-// update comment to Tweet
-const updateCommentToTweet = asyncHandler(async (req, res) => {
-    const { newContent } = req.body 
-    const { tweetId } = req.params
-
-    if(!newContent || newContent?.trim()===""){
-        throw new ApiError(400, "content is required")
-    }
-
-    if(!isValidObjectId(tweetId)){
-        throw new ApiError(400, "This video id is not valid")
-    }
-
-    const comment = await Comment.findById(tweetId)
-
-    if (!comment) {
-        throw new ApiError(404, "comment not found!");
-    }
-
-    if (comment.owner.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You don't have permission to update this comment!");
-    }
-
-    const updateComment = await Comment.findByIdAndUpdate(
-        tweetId,
+        commentId,
         {
             $set:{
                 content: newContent
@@ -227,13 +160,13 @@ const updateCommentToTweet = asyncHandler(async (req, res) => {
 
 // delete comment to video 
 const deleteCommentToVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
+    const { commentId } = req.params
 
-    if(!isValidObjectId(videoId)){
+    if(!isValidObjectId(commentId)){
         throw new ApiError(400, "This video id is not valid")
     }
 
-    const comment = await Comment.findById(videoId)
+    const comment = await Comment.findById(commentId)
 
     if (!comment) {
         throw new ApiError(404, "comment not found!");
@@ -253,15 +186,89 @@ const deleteCommentToVideo = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(200, deleteComment, "comment deleted successfully!!"))
 })
-// delete comment to tweet 
-const deleteCommentToTweet = asyncHandler(async (req, res) => {
+
+// add comment to tweet 
+const addCommentToTweet = asyncHandler(async (req, res) => {
+    const { comment } = req.body;
     const { tweetId } = req.params
+
+    if( !comment || comment?.trim()===""){
+        throw new ApiError(400, "comment is required")
+    }
 
     if(!isValidObjectId(tweetId)){
         throw new ApiError(400, "This tweet id is not valid")
     }
 
-    const comment = await Comment.findById(tweetId)
+    const tweetComment = await Comment.create({
+        content: comment,
+        tweet: tweetId,
+        owner: req.user._id
+    })
+
+    if(!tweetComment){
+        throw new ApiError(500, "something went wrong while creating tweet comment")
+    }
+
+    // return responce
+        return res.status(201).json(
+        new ApiResponse(200, tweetComment, "Tweet comment created successfully!!")
+    );
+})
+
+// update comment to Tweet
+const updateCommentToTweet = asyncHandler(async (req, res) => {
+    const { newContent } = req.body 
+    const { commentId } = req.params
+
+    if(!newContent || newContent?.trim()===""){
+        throw new ApiError(400, "content is required")
+    }
+
+    if(!isValidObjectId(commentId)){
+        throw new ApiError(400, "This video id is not valid")
+    }
+
+    const comment = await Comment.findById(commentId)
+
+    if (!comment) {
+        throw new ApiError(404, "comment not found!");
+    }
+
+    if (comment.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to update this comment!");
+    }
+
+    const updateComment = await Comment.findByIdAndUpdate(
+        commentId,
+        {
+            $set:{
+                content: newContent
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    if(!updateComment){
+        throw new ApiError(500, "something went wrong while updating comment")
+    }
+
+    // return responce
+   return res.status(201).json(
+    new ApiResponse(200, updateComment, "comment updated successfully!!"))
+})
+
+// delete comment to tweet 
+const deleteCommentToTweet = asyncHandler(async (req, res) => {
+    const { commentId } = req.params
+
+    if(!isValidObjectId(commentId)){
+        throw new ApiError(400, "This tweet id is not valid")
+    }
+
+    const comment = await Comment.findById(commentId)
 
     if (!comment) {
         throw new ApiError(404, "comment not found!");
