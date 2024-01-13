@@ -125,7 +125,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(
         200,
         { updatedVideoDetails },
-        "Video updated successfully!"
+        "Video details updated successfully!"
     ));
 
 })
@@ -133,7 +133,29 @@ const updateVideo = asyncHandler(async (req, res) => {
 // get video by id
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "This video id is not valid")
+    } 
+
+    const video = await Video.findById(
+        {
+            _id: videoId
+        }
+    )
+
+    if(!video){
+        throw new ApiError(404, "video not found")
+    }
+
+    // return responce
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            video,
+            "video fetched successfully!!"
+        )
+    )
 })
 
 // get all video 
@@ -194,6 +216,39 @@ const deleteVideo = asyncHandler(async (req, res) => {
 // toggle publish status
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "This video id is not valid")
+    } 
+
+     // find video in db
+     const video = await Video.findById(
+        {
+            _id: videoId
+        }
+    )
+
+    if(!video){
+        throw new ApiError(404, "video not found")
+    }
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You don't have permission to toggle this video!")
+    }
+
+    // toggle video status
+    video.isPublished = !video.isPublished
+
+    await video.save({validateBeforeSave: false})
+
+    //return responce 
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            video,
+            "video toggle successfully!!"
+        )
+    )
 })
 
 export {
