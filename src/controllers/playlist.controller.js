@@ -5,6 +5,7 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { User } from "../models/user.model.js"
 import { Video } from "../models/video.model.js"
+
 // create playlist
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
@@ -79,7 +80,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 // get playlist by id 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const { playlistId } = req.params
-    
+    console.log("playlistId",playlistId)
     if(!isValidObjectId(playlistId)){
         throw new ApiError(400, "This playlist id is not valid")
     }
@@ -91,63 +92,13 @@ const getPlaylistById = asyncHandler(async (req, res) => {
         throw new ApiError(404, "playlist not found");
     }
 
-     // match and find 
-     const getPlaylist = Playlist.aggregate([
-        {
-            $match: new mongoose.Types.ObjectId(playlistId)
-        },
-        {
-            $lookup:{
-                from: "videos",
-                localField: "video",
-                foreignField: "_id",
-                as: "videos",
-                pipeline:[
-                    {
-                        $project:{
-                            title: 1,
-                            description: 1,
-                            thumbnail: 1,
-                            duration: 1,
-                        }
-                    },
-                    {
-                        $addFields: {
-                            videoDetails:{
-                                $arrayElemAt: ["$videos", 0]
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            $lookup:{
-                from: "users",
-                localField: "owner",
-                foreignField: "_id",
-                as: "playlistOwner",
-                pipeline:[
-                    {
-                        $project: {
-                            username: 1,
-                            fullName: 1,
-                            avatar: 1
-                        }
-                    }
-                ]
-            }
-        }
-        
-     ])
-
-    if(!getPlaylist){
+    if(!playlist){
         throw new ApiError(500, "something went wrong while fetching playlist")
     }
 
      // return responce
      return res.status(201).json(
-        new ApiResponse(200, getPlaylist, "playlist fetched  successfully!!"))
+        new ApiResponse(200, playlist, "playlist fetched  successfully!!"))
 })
 
 
@@ -163,7 +114,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(400, "This video id is not valid")
     }
 // find playlist in db
-    const playlist = await Playlist.findById(playlistId)
+    const playlist = await Playlist.findById( playlistId )
 
     if (!playlist) {
         throw new ApiError(404, "no playlist found!");
@@ -174,7 +125,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     }
 
     // find video in db
-    const video = await Video.findById(videoId)
+    const video = await Video.findById( videoId )
 
     if (!video) {
         throw new ApiError(404, "no video found!");
@@ -209,7 +160,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
 // remove video to playlist
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
-    const {playlistId, videoId} = req.params
+    const { playlistId, videoId } = req.params
     
     if(!isValidObjectId(playlistId)){
         throw new ApiError(400, "This playlist id is not valid")
@@ -242,10 +193,12 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     }
 
     // remove video in the playlist 
-    const removeVideoToPlaylist = await playlist.findByIdAndUpdate(
+    const removeVideoToPlaylist = await Playlist.findByIdAndUpdate(
         playlistId,
         {
-            $pull: videoId
+            $pull:{
+                video: videoId
+            }
         },
         {
             new: true
@@ -258,18 +211,20 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
     // return responce 
     return res.status(201).json(
-        new ApiResponse(200, addedToPlaylist, "removed video in playlist successfully!!"))
+        new ApiResponse(200, removeVideoToPlaylist, "removed video in playlist successfully!!"))
 })
 
 // delete playlist
 const deletePlaylist = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params
+    const { playlistId } = req.params
 
     if(!isValidObjectId(playlistId)){
         throw new ApiError(400, "This playlist id is not valid")
     }
 
     const playlist = await Playlist.findById(playlistId)
+
+    console.log("playlist", playlist)
 
     if (!playlist) {
         throw new ApiError(404, "no playlist found!");
@@ -279,7 +234,10 @@ const deletePlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(403, "You don't have permission to delete this playlist!");
     }
 
-    const deletePlaylist = await Playlist.deleteOne(playlistId)
+    const deletePlaylist = await Playlist.deleteOne({
+        _id: playlistId
+    })
+
 
     if(!deletePlaylist){
         throw new ApiError(500, "something went wrong while deleting playlist")
@@ -292,17 +250,17 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 // update playlist
 const updatePlaylist = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params
+    const { playlistId } = req.params
     const {NewName, NewDescription} = req.body
     
     if(!isValidObjectId(playlistId)){
         throw new ApiError(400, "This playlist id is not valid")
     }
     // if any one is provided
-    if ((!NewName || NewName?.trim() === "") && (!NewDescription || NewDescription?.trim() === "")) {
+    if (!((!NewName || NewName?.trim() === "") || (!NewDescription || NewDescription?.trim() === ""))) {
         throw new ApiError(400, "Either name or description is required");
     } else {
-        const playlist = await Playlist.findById(tweetId)
+        const playlist = await Playlist.findById(playlistId)
 
         if (playlist.owner.toString() !== req.user._id.toString()) {
             throw new ApiError(403, "You don't have permission to update this playlist!");
