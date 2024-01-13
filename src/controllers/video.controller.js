@@ -98,7 +98,7 @@ const updateVideo = asyncHandler(async (req, res) => {
         await deleteOnCloudinary(previousVideo.thumbnail?.public_id)
 
         // upload new one 
-         thumbnailUploadOnCloudinary = await uploadOnCloudinaary(thumbnailFileLocalPath);
+         thumbnailUploadOnCloudinary = await uploadOnCloudinaary(thumbnailFile);
 
         if(!thumbnailUploadOnCloudinary){
             throw new ApiError(500, "something went wrong while updating thumbnail on cloudinary !!")
@@ -165,14 +165,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
         page = 1,
         limit = 10,
-        query,
+        query = `/^video/`,
         sortBy = "createdAt",
         sortType = 1, 
-        userId } = req.query
-    
-    if(!isValidObjectId(userId)){
-        throw new ApiError(400, "This user id is not valid")
-    } 
+        userId = req.user._id } = req.query
 
     // find user in db
     const user = await User.findById(
@@ -188,7 +184,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const getAllVideosAggregate = await Video.aggregate([
         {
             $match: { 
-                videoOwner: userId,
+                videoOwner: new mongoose.Types.ObjectId(userId),
                 $or: [
                     { title: { $regex: query, $options: 'i' } },
                     { description: { $regex: query, $options: 'i' } }
@@ -233,7 +229,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
 // delete video
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-
     if(!isValidObjectId(videoId)){
         throw new ApiError(400, "This video id is not valid")
     } 
@@ -248,8 +243,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if(!video){
         throw new ApiError(404, "video not found")
     }
-    
-    if (video.owner.toString() !== req.user._id.toString()) {
+
+    if (video.videoOwner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You don't have permission to delete this video!");
     }
 
