@@ -4,6 +4,7 @@ import { Video } from "../models/video.model.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { User } from "../models/user.model.js";
 
 // publish video
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -160,8 +161,72 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 // get all video 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
+    const { 
+
+        page = 1,
+        limit = 10,
+        query,
+        sortBy = "createdAt",
+        sortType = 1, 
+        userId } = req.query
+    
+    if(!isValidObjectId(userId)){
+        throw new ApiError(400, "This user id is not valid")
+    } 
+
+    // find user in db
+    const user = await User.findById(
+        {
+            _id: userId
+        }
+    )
+
+    if(!user){
+        throw new ApiError(404, "user not found")
+    }
+
+    const getAllVideosAggregate = await Video.aggregate([
+        {
+            $match: { 
+                videoOwner: userId,
+                $or: [
+                    { title: { $regex: query, $options: 'i' } },
+                    { description: { $regex: query, $options: 'i' } }
+                ]
+            }
+        },
+        {
+            $sort:{
+                [sortBy]: sortType
+            }
+        },
+        {
+            $skip: (page -1) * limit
+        },
+        {
+            $limit: parseInt(limit)
+        }
+       
+    ])
+
+    Video.aggregatePaginate(getAllVideosAggregate, {page, limit})
+    .then((result)=>{
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                result,
+                "fetched all videos successfully !!"
+            )
+        )
+    })
+    .catch((error)=>{
+        console.log("getting error while fetching all videos:",error)
+        throw error
+    })
+
+
 })
 
 
