@@ -8,6 +8,7 @@ import { User } from "../models/user.model.js"
 // like or Unlike video
 const toggleVideoLikeAndUnlike = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+
     if(!isValidObjectId(videoId)){
         throw new ApiError(400, "This video id is not valid")
     }
@@ -22,13 +23,27 @@ const toggleVideoLikeAndUnlike = asyncHandler(async (req, res) => {
 
     if(videoLike){
         unlike = await Like.deleteOne({
-            video:videoId
+            video: videoId
         })
+
+        if(!unlike){
+            throw new ApiError(
+                500,
+                "something went wrong while unlike video !!"
+            )
+        }
     }else{
         like = await Like.create({
             video: videoId,
             likedBy: req.user._id
         })
+
+        if(!like){
+            throw new ApiError(
+                500,
+                "something went wrong while like video !!"
+            )
+        }
     }
 
     // return responce
@@ -55,13 +70,28 @@ const toggleCommentLikeAndUnlike = asyncHandler(async (req, res) => {
 
     if(commentLike){
         unlike = await Like.deleteOne({
-            comment:commentId
+            comment: commentId
         })
+
+        if(!unlike){
+            throw new ApiError(
+                500,
+                "something went wrong while unlike comment !!"
+            )
+        }
+
     }else{
         like = await Like.create({
             comment: commentId,
             likedBy: req.user._id
         })
+
+        if(!like){
+            throw new ApiError(
+                500,
+                "something went wrong while like comment !!"
+            )
+        }
     }
 
     // return responce
@@ -88,18 +118,32 @@ const toggleTweetLikeAndUnlike = asyncHandler(async (req, res) => {
 
     if(tweetLike){
         unlike = await Like.deleteOne({
-           tweet:tweetId
+           tweet: tweetId
         })
+
+        if(!unlike){
+            throw new ApiError(
+                500,
+                "something went wrong while unlike comment !!"
+            )
+        }
     }else{
         like = await Like.create({
-             tweet: tweetId,
+            tweet: tweetId,
             likedBy: req.user._id
         })
+
+        if(!like){
+            throw new ApiError(
+                500,
+                "something went wrong while like tweet !!"
+            )
+        }
     }
 
     // return responce
     return res.status(201).json(
-        new ApiResponse(200, {}, `User ${like? "like": "Unlike"} tweet successfully !!`)
+        new ApiResponse(200, {} ,`User ${like? "like": "Unlike"} tweet successfully !!`)
     );
 }
 )
@@ -119,44 +163,44 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    // get all liked videos
-    const like = await Like.aggregate([
-        {
-            $match:{
-                likedBy: new mongoose.Types.ObjectId(userId)
-            }
-        },
+    const likes = await Like.aggregate([
+
         {
             $lookup:{
                 from: "videos",
                 localField: "video",
                 foreignField: "_id",
                 as: "likedVideos",
-                pipeline:{
-                    $lookup:{
-                        from: "users",
-                        localField: "videoOwner",
-                        foreignField:"_id",
-                        as:"userLikedVideos",
-                        pipeline:[
-                            {
-                                $project: {
-                                    fullName: 1,
-                                    avatar: 1,
-                                    username: 1
+                pipeline:[
+                    {
+                        $lookup:{
+                            from: "users",
+                            localField: "videoOwner",
+                            foreignField: "_id",
+                            as: "videoOwner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
                     },
-                    $addFields:{
-                        likedVideos: {
-                            $arrayElemAt: ["$userLikedVideos", 0]
+                    {
+                        $addFields:{
+                            videoOwner:{
+                                $arrayElemAt: ["$videoOwner" , 0]
+                            }
                         }
                     }
-                }
+                ]
             }
-        }
-    ])
+        },
+    
+    ]) 
 
     //return responce 
     return res
@@ -164,7 +208,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     .json(
         new ApiResponse(
             200,
-            like[0]?.likedVideos || {},
+            likes[2].likedVideos,
             " fetched Liked videos successfully !!"
         )
     )
