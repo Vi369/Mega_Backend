@@ -453,7 +453,6 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
                         foreignField: "_id",
                         as: "videoOwner",
                         pipeline:[ // this nested pipeline add the value that i need in videoOwner feild 
-                            //TODO: AGAR BAHAR PIPELINE KARKE DEKHNA HAI 
                             // stage 1 dont need all vlaue want only specific value
                             {
                                 $project: {
