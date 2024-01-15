@@ -4,15 +4,14 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 
 const healthcheck = asyncHandler(async (req, res) => {
-    
     const healthCheck = {
         uptime: process.uptime(),
         message: 'ok',
         responsetime: process.hrtime(),
         timestamp: Date.now()
     };
-
     try {
+        // TODO: i think checks all routes health is here 
         return res.status(200).json(
             new ApiResponse(
                 200,
@@ -21,15 +20,13 @@ const healthcheck = asyncHandler(async (req, res) => {
             )
         )
     } catch (error) {
+        console.error("Error in health check",error)
         healthCheck.message = error;
         throw new ApiError(
             503,
             " getting Error in health check time"
         ) 
     }
-
-    
-
 
 })
 
