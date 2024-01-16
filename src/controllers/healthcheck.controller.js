@@ -11,7 +11,6 @@ const healthcheck = asyncHandler(async (req, res) => {
         timestamp: Date.now()
     };
     try {
-        // TODO: i think checks all routes health is here 
         return res.status(200).json(
             new ApiResponse(
                 200,
