@@ -10,7 +10,9 @@ import {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory} from "../controllers/user.controller.js";
+    getWatchHistory,
+    forgotPassword,
+    resetPassword} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {loginValidator, registerValidator} from '../middlewares/UserDetailsValidator.middleware.js'
@@ -41,9 +43,11 @@ router.route('/current-user-details').get(verifyJWT, getCurrentUser)
 router.route('/update-account-details').patch(verifyJWT,updateAccountDetails)
 router.route('/update-profileimage').patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 router.route('/update-coverimage').patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
+router.route('/reset').post(forgotPassword)
 //params se data 
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route('/watchhistory').get(verifyJWT, getWatchHistory)
+router.route('/reset/:resetToken').post(resetPassword)
 
 
 

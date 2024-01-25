@@ -5,8 +5,8 @@ import {uploadOnCloudinaary, deleteOnCloudinary} from '../utils/services/cloudin
 import { ApiResponse } from "../utils/ApiResponse.js";
 import JWT from "jsonwebtoken";
 import mongoose from "mongoose";
-import fs from 'fs'
-
+import sendEmail from "../utils/services/sendEmail.service.js";
+import crypto from 'crypto'
 // access and refresh token genrate function
 const generateAccessAndRefreshTokens =  async (userId)=>{
     try {
@@ -222,6 +222,112 @@ const changeCurrentPassword = asyncHandler( async(req, res)=>{
    return res
    .status(200)
    .json(new ApiResponse(200,{},"Password Change Successfully!!"))
+})
+
+// forgot password
+const forgotPassword = asyncHandler( async(req,res)=>{
+    const { email } = req.body;
+
+    if(!email){
+        throw new ApiError(400, "Email is required");
+    }
+
+    const user = await User.findOne({ email });
+
+    if(!user){
+        throw new ApiError(400, "Email not registered");
+    }
+
+    // generate the reset token 
+    const resetToken = await user.generateForgotPasswordToken();
+    console.log("reset token",resetToken)
+    // save in db
+    await user.save({validateBeforeSave: false})
+
+    console.log(user);
+
+    const resetPasswordUrl = `${process.env.CORS_ORIGIN}/reset-password/${resetToken}`;
+
+    const subject = "Reset Password"
+    const message = `You can reset your password by clicking <a href = ${resetPasswordUrl} target = "_blank">Reset your password</a>.\n If you have not requested this, kindly ignore it.`
+
+    try {
+        await sendEmail(email, subject, message)
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {resetToken},
+                `Reset password token has been sent to ${email} successfully !!`
+            )
+        )
+
+    } catch (error) {
+        user.passwordResetToken = undefined;
+        user.passwordResetTokenExpiry = undefined;
+        // save in database
+        await user.save({validateBeforeSave: false})
+        console.log(error)
+        throw new ApiError(
+            500,
+            error.message || "something went wrong while sending reset email, try again"
+        )
+    }
+
+
+})
+
+// reset password
+const resetPassword = asyncHandler( async(req,res)=>{
+    const { resetToken } = req.params;
+    // extracting password from req.body
+    const { password } = req.body;
+    if(!password){
+        throw new ApiError(400,
+            "password is required")
+    }
+
+    // hashing the resetToken using sha256 since we have stored our resetToken in DB using the same algorithm
+    const passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex')
+
+    console.log(passwordResetToken)
+
+    // checking token in db if it is not expire still valid
+    const user = await User.findOne({
+        passwordResetToken,
+        passwordResetTokenExpiry: {$gt: Date.now()}
+    })
+    console.log("user:",user)
+
+    if(!user){
+        throw new ApiError(400,
+            'Token is expired or invalid, try again')
+    }
+
+    // if token valid and not expired then update the password
+    user.password = password
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordTokenExpiry = undefined;
+
+    // save in db
+    await user.save({validateBeforeSave: false})
+
+    // return responce 
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            password,
+            "password change successfull!!"
+        )
+    )
+
 })
 
 // get Current user 
@@ -503,4 +609,6 @@ export {
     updateUserCoverImage,
     getUserChannelProfile,
     getWatchHistory,
+    forgotPassword,
+    resetPassword
 }
