@@ -1,4 +1,4 @@
-# Mega Backend ( Vtube )
+# blogerite )
 This project marks a significant milestone in my backend development journey, where I've delved into various technologies and frameworks to build a comprehensive video hosting website enriched with tweet functionalities. Using Node.js, Express.js, MongoDB, Mongoose, JWT, Multer, Bcrypt, Cloudinary, and many more, i have create a robust backend for a feature-rich video hosting website with tweet functionalities.
 
 ## Features
