@@ -23,6 +23,9 @@ This project marks a significant milestone in my backend development journey, wh
 * Users can post tweets, like, and dislike them.
 * Comment on tweets, fostering engagement.
 
+## Dashboard
+* overview of channel and video management tools.
+
 ## Technologies Used
 **Node.js & Express.js:**  The core of the backend development.
 **MongoDB & Mongoose:** Database management for storing user data, videos, and tweets.
