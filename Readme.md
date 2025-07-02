@@ -1,5 +1,8 @@
-# Backend ( VTube )
-This project marks a significant milestone in my backend development journey, where I've delved into various technologies and frameworks to build a comprehensive video hosting website enriched with tweet functionalities. Using Node.js, Express.js, MongoDB, Mongoose, JWT, Multer, Bcrypt, Cloudinary, and many more, i have create a robust backend for a feature-rich video hosting website with tweet functionalities.
+# vTubeBackend
+
+This project marks a key milestone in my backend development journey. I've explored a variety of technologies and frameworks to build a full-featured video hosting platform enhanced with tweet-style interactions.  
+Built with Node.js, Express.js, MongoDB, Mongoose, JWT, Multer, Bcrypt, Cloudinary, and more, VTube's backend is designed to be scalable, secure, and easy to extend.
+
 
 ## Features
 
@@ -62,25 +65,11 @@ Make sure to set these environment variables in your deployment environment or p
 
 ## Postman Link
 https://documenter.getpostman.com/view/31685048/2s9YsQ6oj4
-## model link 
-https://app.eraser.io/workspace/pNGSqTCXzR2H5rJz9DOV?origin=share
-## Learning Journey
-This project reflects my commitment to learning, inspired by the teachings of Hitesh Choudhary. I diligently followed his "Chai aur Code" backend playlist, completing assignments that covered fundamental and advanced functionalities. The project incorporates best practices such as JWT, bcrypt, access tokens, and refresh tokens.
-## Contributing
-We welcome contributions! If you'd like to contribute to [ Vtube (mega backend )], please follow these guidelines:
-- **Bug Reports:** Open an issue with a clear description and steps to reproduce.
-- **Feature Requests:** Submit an issue with detailed specifications.
-- **Pull Requests:** Fork the repo, create a new branch, make changes, and submit a pull request.
 
-    Thank you for contributing!
-## Future Developments 
-This is not the end; I plan to continually enhance this project with additional functionalities based on user feedback and evolving needs. Moreover, if time permits, I aspire to delve into frontend development to create a seamless user experience.
 
 I express my gratitude to Hitesh Sir for providing valuable insights and guidance throughout this learning journey. I've dedicated substantial time to reading, watching tutorials, and building upon the provided assignments to shape this project into a feature-rich backend.
-
 Thank you for being part of my learning journey!
 ## License
-
 This project is licensed under the MIT License - Chai Aur backend, @hiteshchoudhary and @vi369
 
 
